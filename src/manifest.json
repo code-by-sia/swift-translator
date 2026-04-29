@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Swift Translator",
+  "version": "1.0",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}
