@@ -4,7 +4,7 @@
 A chrome extenion to translate heighlitet text immidiately using Built-in chrome AI Translate.
 
 
-<img src="demo.png" />
+<img src="docs/demo.png" />
 
 ## How to test it locally:
 
