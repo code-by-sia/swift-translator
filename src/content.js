@@ -4,22 +4,25 @@ let offset = { x: 0, y: 0 };
 
 // Listen for mouseup to detect when selection is finished
 document.addEventListener("mouseup", async (event) => {
-  const selection = window.getSelection().toString().trim();
+  // Check if extension is enabled before doing anything
+  const settings = await chrome.storage.sync.get(["isEnabled"]);
+  if (settings.isEnabled === false) {
+    if (displayDiv) displayDiv.style.display = "none";
+    return;
+  }
 
-  // If clicking inside the box, don't trigger a new translation
+  const selection = window.getSelection().toString().trim();
   if (displayDiv && displayDiv.contains(event.target)) return;
 
   if (selection.length > 1) {
-    showBox("Translating...");
+    showBox("Preparing AI Model...", true);
     try {
       const translated = await translateSelection(selection);
-      showBox(translated);
+      showBox(translated, false);
     } catch (err) {
-      showBox("Error: " + err.message);
-      console.error(err);
+      showBox("Error: " + err.message, false);
     }
   } else if (displayDiv) {
-    // Hide box if clicking away on empty space
     displayDiv.style.display = "none";
   }
 });

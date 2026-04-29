@@ -2,7 +2,10 @@
   "manifest_version": 3,
   "name": "Swift Translator",
   "version": "1.0",
-  "permissions": ["storage"],
+  "permissions": ["storage", "scripting"],
+  "action": {
+    "default_title": "Click to toggle Translator"
+  },
   "options_page": "options.html",
   "background": {
     "service_worker": "background.js"
