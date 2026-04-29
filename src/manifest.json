@@ -6,6 +6,10 @@
   "action": {
     "default_title": "Click to toggle Translator"
   },
+  "icons": {
+    "64": "icons/64x64.png",
+    "512": "icons/512x512.png"
+  },
   "options_page": "options.html",
   "background": {
     "service_worker": "background.js"
