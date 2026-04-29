@@ -3,6 +3,10 @@
   "name": "Swift Translator",
   "version": "1.0",
   "permissions": ["storage"],
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

@@ -22,23 +22,33 @@ document.addEventListener("mouseup", async (event) => {
   }
 });
 
+async function getSettings() {
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync) {
+    return await chrome.storage.sync.get(["source", "target"]);
+  }
+  // Fallback if API is missing
+  return { source: "de", target: "en" };
+}
+
 // YOUR SPECIFIC TRANSLATION FUNCTION
 async function translateSelection(selectedText) {
-  // Note: Ensure chrome://flags/#translation-api is enabled
+  // Retrieve settings from storage
+  const settings = await getSettings();
+  const src = settings.source || "de";
+  const tgt = settings.target || "en";
+
   const translator = await Translator.create({
-    sourceLanguage: "de",
-    targetLanguage: "en",
+    sourceLanguage: src,
+    targetLanguage: tgt,
     monitor(m) {
       m.addEventListener("downloadprogress", (e) => {
         console.log(`Downloaded ${e.loaded * 100}%`);
       });
     },
   });
+
   const result = await translator.translate(selectedText);
-
-  // Optional: Clean up translator if the API supports .destroy()
   if (translator.destroy) translator.destroy();
-
   return result;
 }
 
@@ -46,25 +56,55 @@ function showBox(content) {
   if (!displayDiv) {
     displayDiv = document.createElement("div");
     displayDiv.id = "ai-translator-display";
+
+    // Main Box Styling
     Object.assign(displayDiv.style, {
       position: "fixed",
       top: "15px",
       right: "15px",
       width: "300px",
-      minHeight: "40px",
       padding: "15px",
       backgroundColor: "#1a73e8",
       color: "#ffffff",
       borderRadius: "8px",
       boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-      zIndex: "2147483647", // Maximum possible z-index
-      fontFamily: "Segoe UI, Tahoma, sans-serif",
+      zIndex: "2147483647",
+      fontFamily: "system-ui, sans-serif",
       fontSize: "14px",
-      pointerEvents: "auto",
     });
+
+    // Content area for text
+    const textSpan = document.createElement("span");
+    textSpan.id = "ai-text-content";
+    displayDiv.appendChild(textSpan);
+
+    // Options Link
+    const settingsLink = document.createElement("a");
+    settingsLink.innerText = "Settings ⚙️";
+    Object.assign(settingsLink.style, {
+      display: "block",
+      marginTop: "10px",
+      fontSize: "11px",
+      color: "#e8f0fe",
+      textDecoration: "none",
+      cursor: "pointer",
+      opacity: "0", // Hidden by default
+      transition: "opacity 0.2s ease",
+    });
+
+    // Hover effect: Show link when hovering over the parent div
+    displayDiv.onmouseenter = () => (settingsLink.style.opacity = "1");
+    displayDiv.onmouseleave = () => (settingsLink.style.opacity = "0");
+
+    settingsLink.onclick = () => {
+      // Directs to the options page defined in manifest
+      chrome.runtime.sendMessage({ action: "openOptions" });
+    };
+
+    displayDiv.appendChild(settingsLink);
     document.body.appendChild(displayDiv);
   }
 
-  displayDiv.innerText = content;
+  document.getElementById("ai-text-content").innerText = content;
   displayDiv.style.display = "block";
 }
