@@ -1,4 +1,6 @@
 let displayDiv = null;
+let isDragging = false;
+let offset = { x: 0, y: 0 };
 
 // Listen for mouseup to detect when selection is finished
 document.addEventListener("mouseup", async (event) => {
@@ -70,7 +72,32 @@ function showBox(content) {
       boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
       zIndex: "2147483647",
       fontFamily: "system-ui, sans-serif",
-      fontSize: "14px",
+      cursor: "grab", // Indicates it can be moved
+    });
+
+    displayDiv.addEventListener("mousedown", (e) => {
+      if (e.target.tagName === "A" || e.target.tagName === "BUTTON") return;
+      isDragging = true;
+      displayDiv.style.cursor = "grabbing";
+      offset.x = e.clientX - displayDiv.getBoundingClientRect().left;
+      offset.y = e.clientY - displayDiv.getBoundingClientRect().top;
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      // Calculate new position
+      const x = e.clientX - offset.x;
+      const y = e.clientY - offset.y;
+
+      // Apply position (removing 'right' and 'top' defaults)
+      displayDiv.style.right = "auto";
+      displayDiv.style.left = x + "px";
+      displayDiv.style.top = y + "px";
+    });
+
+    document.addEventListener("mouseup", () => {
+      isDragging = false;
+      if (displayDiv) displayDiv.style.cursor = "grab";
     });
 
     // Content area for text
