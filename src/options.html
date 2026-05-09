@@ -1,189 +1,540 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
-        <title>Translator Settings</title>
+        <meta charset="UTF-8" />
+        <title>Swift Translator Settings</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --primary: #6366f1;
+                --primary-hover: #4f46e5;
+                --bg-gradient-start: #e0e7ff;
+                --bg-gradient-end: #ede9fe;
+                --card-bg: rgba(255, 255, 255, 0.7);
+                --card-border: rgba(255, 255, 255, 0.5);
+                --text-main: #1e293b;
+                --text-muted: #64748b;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --primary: #818cf8;
+                    --primary-hover: #6366f1;
+                    --bg-gradient-start: #0f172a;
+                    --bg-gradient-end: #1e1b4b;
+                    --card-bg: rgba(30, 41, 59, 0.7);
+                    --card-border: rgba(255, 255, 255, 0.1);
+                    --text-main: #f8fafc;
+                    --text-muted: #cbd5e1;
+                }
+            }
+
+            body {
+                background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+                color: var(--text-main);
+                font-family: "Inter", sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+            }
+
+            .container {
+                position: relative;
+                width: 100%;
+                max-width: 860px;
+                padding: 40px 20px;
+                z-index: 10;
+            }
+
+            .glass-card {
+                background: var(--card-bg);
+                backdrop-filter: blur(24px);
+                -webkit-backdrop-filter: blur(24px);
+                padding: 48px;
+                border-radius: 32px;
+                border: 1px solid var(--card-border);
+                box-shadow: 0 24px 48px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+
+            .glass-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+            }
+
+            .header {
+                text-align: left;
+                margin-bottom: 40px;
+                display: flex;
+                align-items: center;
+                gap: 24px;
+                border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+                padding-bottom: 32px;
+            }
+
+            .header-icon {
+                background: linear-gradient(135deg, var(--primary), #a855f7);
+                color: white;
+                width: 64px;
+                height: 64px;
+                border-radius: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+            }
+
+            h2 {
+                margin: 0;
+                font-size: 32px;
+                font-weight: 700;
+                letter-spacing: -1px;
+            }
+
+            p.subtitle {
+                margin: 6px 0 0 0;
+                font-size: 16px;
+                color: var(--text-muted);
+            }
+
+            .settings-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
+            }
+
+            .input-group {
+                margin-bottom: 24px;
+                position: relative;
+            }
+
+            label {
+                display: block;
+                font-size: 13px;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: var(--text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            select {
+                width: 100%;
+                padding: 14px 16px;
+                border-radius: 12px;
+                border: 1px solid var(--card-border);
+                background-color: rgba(255, 255, 255, 0.5);
+                color: var(--text-main);
+                font-size: 15px;
+                font-family: "Inter", sans-serif;
+                outline: none;
+                appearance: none;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                select {
+                    background-color: rgba(0, 0, 0, 0.2);
+                }
+                select option {
+                    background-color: #1e293b;
+                    color: #f8fafc;
+                }
+            }
+
+            select:focus {
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+                background-color: rgba(255, 255, 255, 0.8);
+            }
+
+            @media (prefers-color-scheme: dark) {
+                select:focus {
+                    background-color: rgba(0, 0, 0, 0.4);
+                }
+            }
+
+            .select-wrapper {
+                position: relative;
+            }
+
+            .select-wrapper::after {
+                content: "▼";
+                font-size: 10px;
+                color: var(--text-muted);
+                position: absolute;
+                right: 16px;
+                top: 50%;
+                transform: translateY(-50%);
+                pointer-events: none;
+            }
+
+            button {
+                width: 100%;
+                padding: 16px;
+                background: var(--primary);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            }
+
+            button:hover {
+                background: var(--primary-hover);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+            }
+
+            button:active {
+                transform: translateY(0);
+            }
+
+            #status {
+                margin-top: 16px;
+                font-size: 14px;
+                font-weight: 500;
+                text-align: center;
+                color: #10b981;
+                height: 20px;
+                opacity: 0;
+                transform: translateY(10px);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            #status.show {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            /* Decorational blobs */
+            .blob {
+                position: absolute;
+                filter: blur(80px);
+                z-index: -1;
+                opacity: 0.5;
+            }
+            .blob-1 {
+                top: -100px;
+                left: -100px;
+                width: 400px;
+                height: 400px;
+                background: #c084fc;
+                border-radius: 50%;
+            }
+            .blob-2 {
+                bottom: -150px;
+                right: -100px;
+                width: 500px;
+                height: 500px;
+                background: #60a5fa;
+                border-radius: 50%;
+            }
+            /* Toggle Switch CSS */
+            .toggle-group {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 24px;
+            }
+
+            .toggle-label {
+                font-size: 14px;
+                font-weight: 600;
+                color: var(--text-main);
+            }
+
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 52px;
+                height: 32px;
+            }
+
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #cbd5e1;
+                transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1);
+                border-radius: 32px;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 3px;
+                bottom: 3px;
+                background-color: white;
+                transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1);
+                border-radius: 50%;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.1);
+            }
+
+            input:checked + .slider {
+                background-color: #10b981;
+            }
+
+            input:focus-visible + .slider {
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+            }
+
+            input:checked + .slider:before {
+                transform: translateX(20px);
+            }
+
+            @media (prefers-color-scheme: dark) {
+                .slider {
+                    background-color: #475569;
+                }
+            }
+
+            .source-group {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.4);
+                padding: 24px 32px;
+                border-radius: 20px;
+                margin-bottom: 0;
+                border: 1px solid rgba(255, 255, 255, 0.6);
+            }
+
+            @media (prefers-color-scheme: dark) {
+                .source-group {
+                    background: rgba(0, 0, 0, 0.2);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                }
+            }
+
+            .input-group.disabled {
+                opacity: 0.4;
+                pointer-events: none;
+                filter: grayscale(100%);
+            }
+
+            .privacy-notice {
+                margin-top: 32px;
+                background: rgba(16, 185, 129, 0.1);
+                border: 1px solid rgba(16, 185, 129, 0.2);
+                padding: 20px 24px;
+                border-radius: 16px;
+                display: flex;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            @media (prefers-color-scheme: dark) {
+                .privacy-notice {
+                    background: rgba(16, 185, 129, 0.05);
+                }
+            }
+
+            .privacy-notice p {
+                margin: 0 0 4px 0;
+                font-size: 14px;
+                color: var(--text-main);
+                line-height: 1.6;
+            }
+
+            .privacy-notice strong {
+                color: #10b981;
+                font-size: 15px;
+                display: block;
+                margin-bottom: 6px;
+            }
+
+            .privacy-notice a {
+                color: var(--primary);
+                text-decoration: none;
+                font-weight: 600;
+                transition: color 0.2s ease;
+            }
+
+            .privacy-notice a:hover {
+                color: var(--primary-hover);
+                text-decoration: underline;
+            }
+        </style>
     </head>
-    <style>
-        :root {
-            --primary: #1a73e8;
-            --bg: #f8f9fa;
-            --card-bg: #ffffff;
-            --text: #202124;
-            --border: #dadce0;
-        }
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            padding-top: 50px;
-            margin: 0;
-        }
-        .card {
-            background: var(--card-bg);
-            padding: 32px;
-            border-radius: 12px;
-            box-shadow:
-                0 1px 3px rgba(0, 0, 0, 0.12),
-                0 1px 2px rgba(0, 0, 0, 0.24);
-            width: 360px;
-        }
-        h2 {
-            margin-top: 0;
-            font-size: 22px;
-            font-weight: 500;
-            color: var(--primary);
-        }
-        .row {
-            margin-bottom: 24px;
-        }
-        label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #5f6368;
-        }
-        select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background-color: white;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        select:focus {
-            border-color: var(--primary);
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition:
-                background 0.2s,
-                box-shadow 0.2s;
-        }
-        button:hover {
-            background: #1557b0;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-        #status {
-            margin-top: 15px;
-            font-size: 13px;
-            text-align: center;
-            color: #1e8e3e;
-            height: 20px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-    </style>
     <body>
-        <div class="card">
-            <h2>Translator Settings</h2>
+        <div class="container">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="glass-card">
+                <div class="header">
+                    <div class="header-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M5 8l6 6"/>
+                          <path d="M4 14l6-6 2-3"/>
+                          <path d="M2 5h12"/>
+                          <path d="M7 2h1"/>
+                          <path d="M22 22l-5-10-5 10"/>
+                          <path d="M14 18h6"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2>Swift Translator</h2>
+                        <p class="subtitle">Customize your AI translation experience</p>
+                    </div>
+                </div>
 
-            <div class="row">
-                <label>From Language</label>
-                <select id="src">
-                    <option value="ar">Arabic</option>
-                    <option value="bg">Bulgarian</option>
-                    <option value="bn">Bengali</option>
-                    <option value="cs">Czech</option>
-                    <option value="da">Danish</option>
-                    <option value="de">German</option>
-                    <option value="el">Greek</option>
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fi">Finnish</option>
-                    <option value="fr">French</option>
-                    <option value="hi">Hindi</option>
-                    <option value="hr">Croatian</option>
-                    <option value="hu">Hungarian</option>
-                    <option value="id">Indonesian</option>
-                    <option value="it">Italian</option>
-                    <option value="iw">Hebrew</option>
-                    <option value="ja">Japanese</option>
-                    <option value="kn">Kannada</option>
-                    <option value="ko">Korean</option>
-                    <option value="lt">Lithuanian</option>
-                    <option value="mr">Marathi</option>
-                    <option value="nl">Dutch</option>
-                    <option value="no">Norwegian</option>
-                    <option value="pl">Polish</option>
-                    <option value="pt">Portuguese</option>
-                    <option value="ro">Romanian</option>
-                    <option value="ru">Russian</option>
-                    <option value="sk">Slovak</option>
-                    <option value="sl">Slovenian</option>
-                    <option value="sv">Swedish</option>
-                    <option value="ta">Tamil</option>
-                    <option value="te">Telugu</option>
-                    <option value="th">Thai</option>
-                    <option value="tr">Turkish</option>
-                    <option value="uk">Ukrainian</option>
-                    <option value="vi">Vietnamese</option>
-                    <option value="zh">Chinese</option>
-                    <option value="zh-Hant">Chinese(Traditional)</option>
-                </select>
+                <div class="settings-grid">
+                    <div class="source-group">
+                        <div class="toggle-group" style="margin-bottom: 0;">
+                            <span class="toggle-label" style="font-size: 16px;">Auto-Detect Source Language</span>
+                            <label class="switch">
+                                <input type="checkbox" id="pageLangDetection">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="input-group" id="src-group" style="margin-bottom: 0;">
+                            <label>From Language (Fallback)</label>
+                            <div class="select-wrapper">
+                                <select id="src">
+                            <option value="auto">Auto-detect (if supported)</option>
+                            <option value="ar">Arabic</option>
+                            <option value="bg">Bulgarian</option>
+                            <option value="bn">Bengali</option>
+                            <option value="cs">Czech</option>
+                            <option value="da">Danish</option>
+                            <option value="de">German</option>
+                            <option value="el">Greek</option>
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fi">Finnish</option>
+                            <option value="fr">French</option>
+                            <option value="hi">Hindi</option>
+                            <option value="hr">Croatian</option>
+                            <option value="hu">Hungarian</option>
+                            <option value="id">Indonesian</option>
+                            <option value="it">Italian</option>
+                            <option value="iw">Hebrew</option>
+                            <option value="ja">Japanese</option>
+                            <option value="kn">Kannada</option>
+                            <option value="ko">Korean</option>
+                            <option value="lt">Lithuanian</option>
+                            <option value="mr">Marathi</option>
+                            <option value="nl">Dutch</option>
+                            <option value="no">Norwegian</option>
+                            <option value="pl">Polish</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="ro">Romanian</option>
+                            <option value="ru">Russian</option>
+                            <option value="sk">Slovak</option>
+                            <option value="sl">Slovenian</option>
+                            <option value="sv">Swedish</option>
+                            <option value="ta">Tamil</option>
+                            <option value="te">Telugu</option>
+                            <option value="th">Thai</option>
+                            <option value="tr">Turkish</option>
+                            <option value="uk">Ukrainian</option>
+                            <option value="vi">Vietnamese</option>
+                            <option value="zh">Chinese</option>
+                            <option value="zh-Hant">Chinese (Traditional)</option>
+                        </select>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>To Language</label>
+                    <div class="select-wrapper">
+                        <select id="target">
+                            <option value="ar">Arabic</option>
+                            <option value="bg">Bulgarian</option>
+                            <option value="bn">Bengali</option>
+                            <option value="cs">Czech</option>
+                            <option value="da">Danish</option>
+                            <option value="de">German</option>
+                            <option value="el">Greek</option>
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fi">Finnish</option>
+                            <option value="fr">French</option>
+                            <option value="hi">Hindi</option>
+                            <option value="hr">Croatian</option>
+                            <option value="hu">Hungarian</option>
+                            <option value="id">Indonesian</option>
+                            <option value="it">Italian</option>
+                            <option value="iw">Hebrew</option>
+                            <option value="ja">Japanese</option>
+                            <option value="kn">Kannada</option>
+                            <option value="ko">Korean</option>
+                            <option value="lt">Lithuanian</option>
+                            <option value="mr">Marathi</option>
+                            <option value="nl">Dutch</option>
+                            <option value="no">Norwegian</option>
+                            <option value="pl">Polish</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="ro">Romanian</option>
+                            <option value="ru">Russian</option>
+                            <option value="sk">Slovak</option>
+                            <option value="sl">Slovenian</option>
+                            <option value="sv">Swedish</option>
+                            <option value="ta">Tamil</option>
+                            <option value="te">Telugu</option>
+                            <option value="th">Thai</option>
+                            <option value="tr">Turkish</option>
+                            <option value="uk">Ukrainian</option>
+                            <option value="vi">Vietnamese</option>
+                            <option value="zh">Chinese</option>
+                            <option value="zh-Hant">Chinese (Traditional)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Theme</label>
+                    <div class="select-wrapper">
+                        <select id="theme">
+                            <option value="system">System Default</option>
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="dynamic">Dynamic (Based on Page)</option>
+                        </select>
+                    </div>
+                </div>
+                </div>
+
+                <div class="privacy-notice">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <div>
+                        <strong>100% Private & Local AI</strong>
+                        <p>Swift Translator runs completely locally on your device using a built-in Local LLM. <b>Absolutely no text or browsing data is ever sent to external servers.</b></p>
+                        <p style="margin-top: 8px;"><a href="https://developer.chrome.com/docs/ai/translator-api" target="_blank">Learn more about the Chrome Built-in AI Translation API</a></p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 48px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(100, 116, 139, 0.2); padding-top: 32px;">
+                    <div id="status" style="margin: 0; text-align: left; font-size: 15px;">Settings saved successfully!</div>
+                    <button id="save" style="width: auto; padding: 14px 40px;">Save Preferences</button>
+                </div>
             </div>
-
-            <div class="row">
-                <label>To Language</label>
-                <select id="target">
-                    <option value="ar">Arabic</option>
-                    <option value="bg">Bulgarian</option>
-                    <option value="bn">Bengali</option>
-                    <option value="cs">Czech</option>
-                    <option value="da">Danish</option>
-                    <option value="de">German</option>
-                    <option value="el">Greek</option>
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fi">Finnish</option>
-                    <option value="fr">French</option>
-                    <option value="hi">Hindi</option>
-                    <option value="hr">Croatian</option>
-                    <option value="hu">Hungarian</option>
-                    <option value="id">Indonesian</option>
-                    <option value="it">Italian</option>
-                    <option value="iw">Hebrew</option>
-                    <option value="ja">Japanese</option>
-                    <option value="kn">Kannada</option>
-                    <option value="ko">Korean</option>
-                    <option value="lt">Lithuanian</option>
-                    <option value="mr">Marathi</option>
-                    <option value="nl">Dutch</option>
-                    <option value="no">Norwegian</option>
-                    <option value="pl">Polish</option>
-                    <option value="pt">Portuguese</option>
-                    <option value="ro">Romanian</option>
-                    <option value="ru">Russian</option>
-                    <option value="sk">Slovak</option>
-                    <option value="sl">Slovenian</option>
-                    <option value="sv">Swedish</option>
-                    <option value="ta">Tamil</option>
-                    <option value="te">Telugu</option>
-                    <option value="th">Thai</option>
-                    <option value="tr">Turkish</option>
-                    <option value="uk">Ukrainian</option>
-                    <option value="vi">Vietnamese</option>
-                    <option value="zh">Chinese</option>
-                    <option value="zh-Hant">Chinese(Traditional)</option>
-                </select>
-            </div>
-
-            <button id="save">Save Preferences</button>
-            <div id="status">Settings saved!</div>
         </div>
-
         <script src="options.js"></script>
     </body>
 </html>
