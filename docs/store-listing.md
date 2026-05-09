@@ -6,7 +6,13 @@ Use the following content to fill out your extension's listing on the Chrome Web
 Swift Translator: 100% Private Local AI
 
 ## Short Description (Max 132 characters)
-Instantly translate highlighted text on any webpage using Chrome's built-in Local AI. Lightning-fast, and 100% private.
+*Choose one of the following:*
+
+**Option 1:** Instantly translate highlighted text on any webpage using Chrome's built-in Local AI. Lightning-fast, and 100% private.
+
+**Option 2:** 100% private, on-device AI translation. Highlight text on any page for a blazing-fast, secure translation popup.
+
+**Option 3:** Fast, private, and powerful. Translate text locally right inside your browser with Chrome's built-in AI—no internet required.
 
 ## Detailed Description
 
