@@ -1,8 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Swift Translator",
-  "version": "1.0",
-  "permissions": ["storage", "scripting"],
+  "version": "1.2",
+  "permissions": [
+    "storage"
+  ],
   "action": {
     "default_title": "Click to toggle Translator",
     "default_icon": {
@@ -24,8 +26,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
     }
   ]
 }
