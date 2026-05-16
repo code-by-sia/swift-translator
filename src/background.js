@@ -1,5 +1,5 @@
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.storage.sync.set({ isEnabled: true, source: "en", target: "de" });
+  chrome.storage.sync.set({ isEnabled: true, source: "de", target: "en", pageLangDetection: true });
 });
 
 chrome.action.onClicked.addListener(async (tab) => {
