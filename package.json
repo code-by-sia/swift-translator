@@ -1,0 +1,37 @@
+{
+  "name": "swift-translator",
+  "version": "1.0.0",
+  "description": "A high-performance, 100% private, beautifully designed Chrome extension that translates text instantly using your browser's built-in Local AI.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "rm -rf dist && mkdir -p dist/extension && cp -r src/* dist/extension/ && cd dist/extension && zip -r ../swift-translator.zip .",
+    "format": "prettier --write \"src/**/*.{js,html,css,json}\"",
+    "lint": "eslint src/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/code-by-sia/swift-translator.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/code-by-sia/swift-translator/issues"
+  },
+  "homepage": "https://github.com/code-by-sia/swift-translator#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.4.0",
+    "globals": "^17.6.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "prettier": "^3.8.3"
+  },
+  "jest": {
+    "testEnvironment": "jsdom"
+  }
+}

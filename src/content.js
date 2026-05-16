@@ -6,7 +6,7 @@ let offset = { x: 0, y: 0 };
 document.addEventListener("mouseup", async (event) => {
   let settings;
   try {
-    settings = await chrome.storage.sync.get(["isEnabled", "theme", "target"]);
+    settings = await chrome.storage.sync.get({ isEnabled: true, theme: "system", target: "en" });
   } catch (err) {
     if (err.message.includes("Extension context invalidated")) {
       console.warn("Swift Translator: Extension context invalidated. Please refresh the page.");
@@ -51,17 +51,18 @@ document.addEventListener("mouseup", async (event) => {
 });
 
 async function getSettings() {
+  const defaults = { source: "de", target: "en", pageLangDetection: true, theme: "system" };
   if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync) {
     try {
-      return await chrome.storage.sync.get(["source", "target", "pageLangDetection"]);
+      return await chrome.storage.sync.get(defaults);
     } catch (err) {
       if (err.message.includes("Extension context invalidated")) {
         console.warn("Swift Translator: Extension context invalidated. Please refresh the page.");
       }
     }
   }
-  // Fallback if API is missing
-  return { source: "de", target: "en", pageLangDetection: false };
+  // Fallback if API is missing or error occurs
+  return defaults;
 }
 
 // YOUR SPECIFIC TRANSLATION FUNCTION
@@ -81,40 +82,53 @@ async function translateSelection(selectedText) {
 
   let wasDetected = false;
 
-  if (settings.pageLangDetection) {
-    const pageLang = document.documentElement.lang;
-    if (pageLang) {
-      // Basic extraction of language code (e.g., 'en-US' -> 'en')
-      const langCode = pageLang.split('-')[0].toLowerCase();
-      if (langCode) {
-        src = langCode;
-        wasDetected = true;
-      }
-    }
-  }
+  if (settings.pageLangDetection || src === "auto") {
+    try {
+      let detectedLangStr = null;
 
-  // The Chrome Translator API currently does not accept "auto" for createTranslator.
-  // We must detect the language using the detector API or fallback.
-  if (src === "auto") {
-    if (typeof translation !== "undefined" && translation.createDetector) {
-      try {
-        const detector = await translation.createDetector();
-        const results = await detector.detect(selectedText);
-        if (results.length > 0) {
-          src = results[0].detectedLanguage;
-          wasDetected = true;
-        } else {
-          src = "en"; // Safe fallback
-          wasDetected = true;
+      // Try Chrome Built-in AI language detection first, if available
+      if (typeof ai !== "undefined" && ai.languageDetector) {
+        try {
+          const detector = await ai.languageDetector.create();
+          if (detector && detector.ready) await detector.ready;
+          if (detector) {
+            const results = await detector.detect(selectedText);
+            if (results && results.length > 0) {
+              detectedLangStr = results[0].detectedLanguage || results[0].language;
+            }
+          }
+        } catch (e) {
+          console.warn("AI Language detection failed, falling back to i18n", e);
         }
-      } catch (e) {
-        console.warn("Language detection failed", e);
-        src = "en";
+      }
+
+      // Fallback to Chrome's highly reliable i18n API
+      if (!detectedLangStr && chrome && chrome.i18n && chrome.i18n.detectLanguage) {
+        const result = await new Promise(resolve => chrome.i18n.detectLanguage(selectedText, resolve));
+        if (result && result.languages && result.languages.length > 0) {
+          // Always use highest probability match
+          detectedLangStr = result.languages[0].language;
+        }
+      }
+
+      if (detectedLangStr && detectedLangStr !== "unknown" && detectedLangStr !== "und") {
+        // Normalize language codes for Translation API
+        if (detectedLangStr.startsWith("zh")) {
+          src = (detectedLangStr.toLowerCase() === "zh-tw" || detectedLangStr.toLowerCase() === "zh-hant") ? "zh-Hant" : "zh";
+        } else {
+          src = detectedLangStr.split("-")[0]; // e.g., 'en-US' -> 'en'
+        }
+        wasDetected = true;
+      } else if (src === "auto") {
+        src = "de"; // Safe fallback
         wasDetected = true;
       }
-    } else {
-      src = "en";
-      wasDetected = true;
+    } catch (e) {
+      console.warn("Language detection failed entirely", e);
+      if (src === "auto") {
+        src = "de";
+        wasDetected = true;
+      }
     }
   }
 
@@ -144,7 +158,7 @@ async function translateSelection(selectedText) {
       },
     });
   } catch (err) {
-    throw new Error("Failed to initialize translator: " + err.message);
+    throw new Error("Failed to initialize translator: " + err.message, { cause: err });
   }
 
   const result = await translator.translate(selectedText);

@@ -26,20 +26,16 @@ document.getElementById("pageLangDetection").addEventListener("change", (e) => {
 });
 
 // Load existing settings on open
-chrome.storage.sync.get(["source", "target", "pageLangDetection", "theme"], (data) => {
-  if (data.source) document.getElementById("src").value = data.source;
-  if (data.target) document.getElementById("target").value = data.target;
-  if (data.theme) document.getElementById("theme").value = data.theme;
+const defaults = { source: "de", target: "en", pageLangDetection: true, theme: "system" };
+chrome.storage.sync.get(defaults, (data) => {
+  document.getElementById("src").value = data.source;
+  document.getElementById("target").value = data.target;
+  document.getElementById("theme").value = data.theme;
   
   const pageLangDetection = document.getElementById("pageLangDetection");
   const srcGroup = document.getElementById("src-group");
 
-  if (data.pageLangDetection !== undefined) {
-    pageLangDetection.checked = data.pageLangDetection;
-  } else {
-    // Default to false if not set
-    pageLangDetection.checked = false;
-  }
+  pageLangDetection.checked = data.pageLangDetection;
 
   // Set initial disabled state
   if (pageLangDetection.checked) {
