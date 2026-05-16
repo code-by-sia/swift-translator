@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "jest",
-    "build": "rm -rf dist && mkdir -p dist/extension && cp -r src/* dist/extension/ && cd dist/extension && zip -r ../swift-translator.zip .",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && mkdir -p dist/extension && cp -r src/* dist/extension/ && cd dist/extension && zip -r ../swift-translator.zip .",
     "format": "prettier --write \"src/**/*.{js,html,css,json}\"",
     "lint": "eslint src/"
   },
