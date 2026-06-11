@@ -1,6 +1,6 @@
 {
   "name": "swift-translator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A high-performance, 100% private, beautifully designed Chrome extension that translates text instantly using your browser's built-in Local AI.",
   "main": "index.js",
   "directories": {
