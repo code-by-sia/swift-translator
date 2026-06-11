@@ -6,10 +6,16 @@ let offset = { x: 0, y: 0 };
 document.addEventListener("mouseup", async (event) => {
   let settings;
   try {
-    settings = await chrome.storage.sync.get({ isEnabled: true, theme: "system", target: "en" });
+    settings = await chrome.storage.sync.get({
+      isEnabled: true,
+      theme: "system",
+      target: "en",
+    });
   } catch (err) {
     if (err.message.includes("Extension context invalidated")) {
-      console.warn("Swift Translator: Extension context invalidated. Please refresh the page.");
+      console.warn(
+        "Swift Translator: Extension context invalidated. Please refresh the page.",
+      );
     }
     return;
   }
@@ -39,6 +45,9 @@ document.addEventListener("mouseup", async (event) => {
       const { translated, detectedLang } = await translateSelection(selection);
       isFinished = true;
       clearTimeout(loadingTimeout);
+      if (detectedLang == targetLang) {
+        return;
+      }
       showBox(translated, false, theme, detectedLang, targetLang);
     } catch (err) {
       isFinished = true;
@@ -51,13 +60,20 @@ document.addEventListener("mouseup", async (event) => {
 });
 
 async function getSettings() {
-  const defaults = { source: "de", target: "en", pageLangDetection: true, theme: "system" };
+  const defaults = {
+    source: "de",
+    target: "en",
+    pageLangDetection: true,
+    theme: "system",
+  };
   if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.sync) {
     try {
       return await chrome.storage.sync.get(defaults);
     } catch (err) {
       if (err.message.includes("Extension context invalidated")) {
-        console.warn("Swift Translator: Extension context invalidated. Please refresh the page.");
+        console.warn(
+          "Swift Translator: Extension context invalidated. Please refresh the page.",
+        );
       }
     }
   }
@@ -69,10 +85,13 @@ async function getSettings() {
 async function translateSelection(selectedText) {
   // Check if API is available
   const isTranslatorGlobal = typeof Translator !== "undefined";
-  const isTranslationGlobal = typeof translation !== "undefined" && translation.createTranslator;
-  
+  const isTranslationGlobal =
+    typeof translation !== "undefined" && translation.createTranslator;
+
   if (!isTranslatorGlobal && !isTranslationGlobal) {
-    throw new Error("Translator API not available. Please update your browser to the latest version and ensure experimental AI features are enabled in chrome://flags.");
+    throw new Error(
+      "Translator API not available. Please update your browser to the latest version and ensure experimental AI features are enabled in chrome://flags.",
+    );
   }
 
   // Retrieve settings from storage
@@ -94,7 +113,8 @@ async function translateSelection(selectedText) {
           if (detector) {
             const results = await detector.detect(selectedText);
             if (results && results.length > 0) {
-              detectedLangStr = results[0].detectedLanguage || results[0].language;
+              detectedLangStr =
+                results[0].detectedLanguage || results[0].language;
             }
           }
         } catch (e) {
@@ -103,18 +123,33 @@ async function translateSelection(selectedText) {
       }
 
       // Fallback to Chrome's highly reliable i18n API
-      if (!detectedLangStr && chrome && chrome.i18n && chrome.i18n.detectLanguage) {
-        const result = await new Promise(resolve => chrome.i18n.detectLanguage(selectedText, resolve));
+      if (
+        !detectedLangStr &&
+        chrome &&
+        chrome.i18n &&
+        chrome.i18n.detectLanguage
+      ) {
+        const result = await new Promise((resolve) =>
+          chrome.i18n.detectLanguage(selectedText, resolve),
+        );
         if (result && result.languages && result.languages.length > 0) {
           // Always use highest probability match
           detectedLangStr = result.languages[0].language;
         }
       }
 
-      if (detectedLangStr && detectedLangStr !== "unknown" && detectedLangStr !== "und") {
+      if (
+        detectedLangStr &&
+        detectedLangStr !== "unknown" &&
+        detectedLangStr !== "und"
+      ) {
         // Normalize language codes for Translation API
         if (detectedLangStr.startsWith("zh")) {
-          src = (detectedLangStr.toLowerCase() === "zh-tw" || detectedLangStr.toLowerCase() === "zh-hant") ? "zh-Hant" : "zh";
+          src =
+            detectedLangStr.toLowerCase() === "zh-tw" ||
+            detectedLangStr.toLowerCase() === "zh-hant"
+              ? "zh-Hant"
+              : "zh";
         } else {
           src = detectedLangStr.split("-")[0]; // e.g., 'en-US' -> 'en'
         }
@@ -139,16 +174,20 @@ async function translateSelection(selectedText) {
 
   let translator;
   try {
-    const createFn = isTranslatorGlobal ? Translator.create.bind(Translator) : translation.createTranslator.bind(translation);
+    const createFn = isTranslatorGlobal
+      ? Translator.create.bind(Translator)
+      : translation.createTranslator.bind(translation);
     translator = await createFn({
       sourceLanguage: src,
       targetLanguage: tgt,
       monitor(m) {
         m.addEventListener("downloadprogress", (e) => {
           // e.loaded might be bytes or fraction depending on API version, handle both gracefully
-          const percent = e.total ? Math.round((e.loaded / e.total) * 100) : Math.round(e.loaded * 100);
+          const percent = e.total
+            ? Math.round((e.loaded / e.total) * 100)
+            : Math.round(e.loaded * 100);
           console.log(`Downloaded ${percent}%`);
-          
+
           // Update the UI dynamically
           const loadingText = document.getElementById("ai-loading-text");
           if (loadingText) {
@@ -158,7 +197,9 @@ async function translateSelection(selectedText) {
       },
     });
   } catch (err) {
-    throw new Error("Failed to initialize translator: " + err.message, { cause: err });
+    throw new Error("Failed to initialize translator: " + err.message, {
+      cause: err,
+    });
   }
 
   const result = await translator.translate(selectedText);
@@ -166,7 +207,13 @@ async function translateSelection(selectedText) {
   return { translated: result, detectedLang: wasDetected ? src : null };
 }
 
-function showBox(content, isLoading = false, theme = "system", detectedLang = null, targetLang = "en") {
+function showBox(
+  content,
+  isLoading = false,
+  theme = "system",
+  detectedLang = null,
+  targetLang = "en",
+) {
   // Determine if dark mode should be applied
   let isDarkMode = false;
   if (theme === "dark") {
@@ -181,12 +228,17 @@ function showBox(content, isLoading = false, theme = "system", detectedLang = nu
       const r = parseInt(match[0], 10);
       const g = parseInt(match[1], 10);
       const b = parseInt(match[2], 10);
-      const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
+      const hsp = Math.sqrt(
+        0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b),
+      );
       isDarkMode = hsp > 127.5; // Bright text usually means dark background
     }
   } else {
     // System Default
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    if (
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    ) {
       isDarkMode = true;
     }
   }
@@ -252,13 +304,15 @@ function showBox(content, isLoading = false, theme = "system", detectedLang = nu
       borderRadius: "16px",
       border: "1px solid var(--ai-border)",
       boxShadow: "0 10px 40px var(--ai-shadow), 0 1px 3px var(--ai-shadow-sm)",
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-      cursor: "grab", 
-      transition: "opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+      fontFamily:
+        "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+      cursor: "grab",
+      transition:
+        "opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
       opacity: "0",
       transform: "translateY(-10px) scale(0.95)",
     });
-    
+
     // Force maximum z-index with !important
     displayDiv.style.setProperty("z-index", "2147483647", "important");
 
@@ -299,7 +353,7 @@ function showBox(content, isLoading = false, theme = "system", detectedLang = nu
       color: "var(--ai-muted)",
       letterSpacing: "0.5px",
       textTransform: "uppercase",
-      width: "100%"
+      width: "100%",
     });
     header.innerHTML = `
       <div style="display: flex; align-items: center;">
@@ -335,7 +389,7 @@ function showBox(content, isLoading = false, theme = "system", detectedLang = nu
       maxHeight: "300px",
       overflowY: "auto",
       overflowX: "hidden",
-      wordWrap: "break-word"
+      wordWrap: "break-word",
     });
     displayDiv.appendChild(textSpan);
 
@@ -375,8 +429,13 @@ function showBox(content, isLoading = false, theme = "system", detectedLang = nu
       try {
         chrome.runtime.sendMessage({ action: "openOptions" });
       } catch (err) {
-        if (err.message && err.message.includes("Extension context invalidated")) {
-          alert("Swift Translator was updated. Please refresh the page to access settings.");
+        if (
+          err.message &&
+          err.message.includes("Extension context invalidated")
+        ) {
+          alert(
+            "Swift Translator was updated. Please refresh the page to access settings.",
+          );
         }
       }
     };
@@ -387,9 +446,9 @@ function showBox(content, isLoading = false, theme = "system", detectedLang = nu
   }
 
   // Determine direction based on target language
-  const rtlLangs = ['ar', 'iw', 'he', 'fa', 'ur', 'ps'];
+  const rtlLangs = ["ar", "iw", "he", "fa", "ur", "ps"];
   const isRTL = rtlLangs.includes(targetLang.toLowerCase());
-  const dirAttr = isRTL ? 'rtl' : 'ltr';
+  const dirAttr = isRTL ? "rtl" : "ltr";
 
   // Dynamically update theme attribute and direction
   displayDiv.setAttribute("data-theme", isDarkMode ? "dark" : "light");
@@ -406,7 +465,7 @@ function showBox(content, isLoading = false, theme = "system", detectedLang = nu
   }
 
   const textContainer = document.getElementById("ai-text-content");
-  
+
   if (isLoading) {
     textContainer.innerHTML = `
       <div style="display: flex; align-items: center; gap: 10px; color: #6366f1;">
@@ -428,8 +487,10 @@ function showBox(content, isLoading = false, theme = "system", detectedLang = nu
       </style>
     `;
   } else {
-    const sanitizedContent = content.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    
+    const sanitizedContent = content
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
     textContainer.innerHTML = `
       <div class="ai-text-wrapper" style="animation: ai-fade-in-up 0.4s ease-out; position: relative;">
         <div class="ai-translated-text" style="
@@ -485,28 +546,31 @@ function showBox(content, isLoading = false, theme = "system", detectedLang = nu
     const copyBtn = document.getElementById("ai-copy-btn");
     if (copyBtn) {
       copyBtn.addEventListener("click", () => {
-        navigator.clipboard.writeText(content).then(() => {
-          // Show checkmark on success
-          copyBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-          copyBtn.style.color = "#10b981";
-          
-          // Revert back after 2 seconds
-          setTimeout(() => {
-            copyBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-            copyBtn.style.color = "#94a3b8";
-          }, 2000);
-        }).catch(err => {
-          console.error("Failed to copy text: ", err);
-        });
+        navigator.clipboard
+          .writeText(content)
+          .then(() => {
+            // Show checkmark on success
+            copyBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            copyBtn.style.color = "#10b981";
+
+            // Revert back after 2 seconds
+            setTimeout(() => {
+              copyBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+              copyBtn.style.color = "#94a3b8";
+            }, 2000);
+          })
+          .catch((err) => {
+            console.error("Failed to copy text: ", err);
+          });
       });
     }
   }
 
   displayDiv.style.display = "block";
-  
+
   // Trigger reflow to ensure animation works
   void displayDiv.offsetWidth;
-  
+
   displayDiv.style.opacity = "1";
   displayDiv.style.transform = "translateY(0) scale(1)";
 }
