@@ -19,14 +19,22 @@ Welcome to **Swift Translator**! This browser extension leverages the power of C
 ### Translating Text
 Translating text is designed to be frictionless:
 1. Highlight any text on any web page.
-2. The Swift Translator popup will instantly appear near your cursor.
-3. The built-in AI will detect the source language (if auto-detect is enabled) and translate it into your preferred target language.
-4. **Copying**: Click the copy icon in the top right of the translated text box to copy the result to your clipboard.
-5. **Dismissing**: Click anywhere outside the popup, or simply highlight new text to dismiss it.
+2. The Swift Translator popup appears just below your selection (flipping above it near the bottom of the window).
+3. The built-in AI detects the source language (if auto-detect is enabled) and translates it into your preferred target language.
+4. **Copying**: Click the copy icon in the popup header. You can also select the translated text directly and copy it by hand.
+5. **Dismissing**: Press `Esc`, click the × in the header, click anywhere outside the popup, or highlight new text.
+
+If the text you highlighted is already in your target language, nothing is shown — there is nothing to translate.
+
+Very large selections are capped at 4,000 characters; the popup tells you when it truncated something.
 
 ### Moving the Popup
-If the translation box is covering important information on the page:
-- Click and drag anywhere inside the popup to move it around the screen.
+If the translation box covers something important:
+- Drag it by its header or edges. The translated text itself stays selectable, and the popup is always kept inside the window.
+- Once you move it, it stays where you put it until you press `Esc`.
+
+### Pausing the Extension
+Click the toolbar icon or press `Alt+Shift+T`. An **OFF** badge appears on the icon while it is paused, and the badge is restored when you restart Chrome.
 
 ### Configuring Settings
 You can customize your experience via the Settings Dashboard:
@@ -46,4 +54,6 @@ You can customize your experience via the Settings Dashboard:
 ## Troubleshooting
 
 - **Error: Extension context invalidated**: This happens if the extension was updated in the background. Simply refresh the web page you are on to reload the extension scripts.
-- **Model Download Progress**: If you are translating a new language pair for the first time, Chrome may need to download the language model. You will see a live progress percentage in the popup.
+- **Model Download Progress**: The first translation of a new language pair needs Chrome to download that model. You will see a live progress percentage in the popup. You can also download it ahead of time from the Settings page, which shows the status of your current language pair and offers a **Download now** button.
+- **"Chrome can't translate X → Y yet"**: Chrome does not ship a model for that pair. Try a different target language.
+- **Nothing happens on some pages**: Chrome blocks extensions on `chrome://` pages, the Chrome Web Store, and other extensions' pages. Text inside embedded iframes is also not translated yet.

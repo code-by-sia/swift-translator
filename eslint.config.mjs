@@ -11,14 +11,17 @@ export default [
         ...globals.browser,
         ...globals.webextensions,
         ...globals.jest,
+        module: "writable",
+        require: "readonly",
         ai: "readonly",
         translation: "readonly",
-        Translator: "readonly"
-      }
+        Translator: "readonly",
+        LanguageDetector: "readonly",
+      },
     },
     rules: {
       "no-unused-vars": "warn",
-      "no-undef": "warn"
-    }
-  }
+      "no-undef": "warn",
+    },
+  },
 ];

@@ -5,11 +5,13 @@ A high-performance, 100% private, beautifully designed Chrome extension that tra
 ![Swift Translator Demo](./docs/demo.png)
 
 ## Features
-- **Lightning Fast**: Powered by Chrome's experimental built-in AI Translation API.
-- **100% Private**: Translations happen locally on your device. Absolutely no text is sent to external servers.
-- **Glassmorphic UI**: A premium, drag-and-drop enabled interface with smooth animations and a dynamic theme engine.
-- **Smart Language Detection**: Automatically detects the source language of your highlighted text.
-- **RTL Support**: Seamlessly handles Right-to-Left languages like Arabic and Hebrew.
+- **Lightning Fast**: Powered by Chrome's built-in AI Translation API. Loaded models are reused between selections, so only the first translation of a language pair waits on a download.
+- **100% Private**: Translations happen locally on your device. Absolutely no text is sent to external servers — the extension makes no network requests of its own.
+- **Appears where you're reading**: The popup opens next to your selection and can be dragged anywhere; press `Esc` to dismiss it.
+- **Isolated UI**: The popup renders in a shadow root, so page styles can't distort it and it can't disturb the page.
+- **Smart Language Detection**: Uses Chrome's on-device `LanguageDetector`, falling back to `chrome.i18n`.
+- **RTL Support**: Seamlessly handles Right-to-Left languages like Arabic, Hebrew and Persian.
+- **Pause anytime**: Click the toolbar icon or press `Alt+Shift+T`.
 
 ## Getting Started
 
@@ -23,4 +25,12 @@ For full instructions, troubleshooting, and configuration details, please see th
 ## Architecture
 - `content.js`: Injects the translation UI, handles drag-and-drop, theme application, and communicates with the Local AI models.
 - `options.js` & `options.html`: A full-page, responsive dashboard for managing your preferences, built with modern CSS grids.
-- `background.js`: Handles service worker tasks and persistent state management.
+- `background.js`: Service worker — seeds defaults without clobbering saved settings, keeps the toolbar badge in sync, and handles the toggle shortcut.
+
+## Development
+```bash
+npm install
+npm test     # jest
+npm run lint # eslint
+npm run build # produces dist/swift-translator.zip
+```
