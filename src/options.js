@@ -3,11 +3,26 @@ const DEFAULTS = {
   target: "en",
   pageLangDetection: true,
   theme: "system",
+  pinPosition: false,
 };
 
 // Legacy ISO codes that used to be stored but are not valid Translator API
 // codes. Map them so existing users keep their language after an update.
 const LANG_ALIASES = { iw: "he", in: "id", ji: "yi" };
+
+const LANGUAGES = [
+  ["ar", "Arabic"], ["bn", "Bengali"], ["bg", "Bulgarian"],
+  ["zh", "Chinese (Simplified)"], ["zh-Hant", "Chinese (Traditional)"],
+  ["hr", "Croatian"], ["cs", "Czech"], ["da", "Danish"], ["nl", "Dutch"],
+  ["en", "English"], ["fi", "Finnish"], ["fr", "French"], ["de", "German"],
+  ["el", "Greek"], ["he", "Hebrew"], ["hi", "Hindi"], ["hu", "Hungarian"],
+  ["id", "Indonesian"], ["it", "Italian"], ["ja", "Japanese"],
+  ["kn", "Kannada"], ["ko", "Korean"], ["lt", "Lithuanian"], ["mr", "Marathi"],
+  ["no", "Norwegian"], ["pl", "Polish"], ["pt", "Portuguese"],
+  ["ro", "Romanian"], ["ru", "Russian"], ["sk", "Slovak"], ["sl", "Slovenian"],
+  ["es", "Spanish"], ["sv", "Swedish"], ["ta", "Tamil"], ["te", "Telugu"],
+  ["th", "Thai"], ["tr", "Turkish"], ["uk", "Ukrainian"], ["vi", "Vietnamese"],
+];
 
 const $ = (id) => document.getElementById(id);
 
@@ -16,8 +31,27 @@ function canonical(code) {
   return LANG_ALIASES[code.toLowerCase()] || code;
 }
 
+function fillSelect(select, includeAuto) {
+  const options = includeAuto
+    ? [["auto", "Detect automatically"], ...LANGUAGES]
+    : LANGUAGES;
+  for (const [value, label] of options) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    select.appendChild(option);
+  }
+}
+
+function syncPositionHint() {
+  const fixed = $("pinPosition").value === "fixed";
+  $("position-hint").textContent = fixed
+    ? "Drag the popup once; it reopens there from then on."
+    : "Appears next to the text you highlight.";
+}
+
 function syncSourceDisabledState() {
-  $("src-group").classList.toggle("disabled", $("pageLangDetection").checked);
+  $("src-group").classList.toggle("is-dimmed", $("pageLangDetection").checked);
 }
 
 function showStatus(message, isError = false) {
@@ -26,7 +60,7 @@ function showStatus(message, isError = false) {
   status.classList.toggle("error", isError);
   status.classList.add("show");
   clearTimeout(showStatus.timer);
-  showStatus.timer = setTimeout(() => status.classList.remove("show"), 2500);
+  showStatus.timer = setTimeout(() => status.classList.remove("show"), 1800);
 }
 
 /* ------------------------------------------------------------------ *
@@ -38,8 +72,7 @@ function effectiveSource() {
   if (selected && selected !== "auto") return selected;
   // With auto-detect there is no fixed source, so report on the browser's
   // own language as a representative pair.
-  const uiLang = (navigator.language || "en").split("-")[0].toLowerCase();
-  return canonical(uiLang);
+  return canonical((navigator.language || "en").split("-")[0].toLowerCase());
 }
 
 function setModelStatus(html) {
@@ -62,18 +95,26 @@ function computeDownloadPercent(event) {
   return null;
 }
 
-function renderProgress(pairLabel, percent) {
+function pairLabel(source, target) {
+  return (
+    "<strong>" +
+    source.toUpperCase() +
+    " &rarr; " +
+    target.toUpperCase() +
+    "</strong>"
+  );
+}
+
+function renderProgress(label, percent) {
   const indeterminate = percent === null || percent === undefined;
   const value = indeterminate ? 0 : clampPercent(percent);
   setModelStatus(
     "Downloading the " +
-      pairLabel +
+      label +
       " model&hellip;" +
       '<div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"' +
-      (indeterminate ? "" : ' aria-valuenow="' + value + '"') +
-      (indeterminate ? ' data-indeterminate="true"' : "") +
-      ">" +
-      '<div class="progress-track"><div class="progress-fill" style="width:' +
+      (indeterminate ? ' data-indeterminate="true"' : ' aria-valuenow="' + value + '"') +
+      '><div class="progress-track"><div class="progress-fill" style="width:' +
       value +
       '%"></div></div>' +
       '<div class="progress-meta"><span>Keep this page open</span><span>' +
@@ -85,24 +126,17 @@ function renderProgress(pairLabel, percent) {
 async function refreshModelStatus() {
   const source = effectiveSource();
   const target = canonical($("target").value);
-  const pair =
-    "<strong>" +
-    source.toUpperCase() +
-    " &rarr; " +
-    target.toUpperCase() +
-    "</strong>";
+  const label = pairLabel(source, target);
 
   if (typeof Translator === "undefined" || !Translator.availability) {
     setModelStatus(
-      "Chrome's built-in translator isn't available in this browser. Update Chrome, then enable it at <code>chrome://flags/#translation-api</code>.",
+      "Chrome's built-in translator isn't available in this browser. It needs <strong>Chrome 138 or later on desktop</strong>; mobile Chrome doesn't support it.",
     );
     return;
   }
 
   if (source === target) {
-    setModelStatus(
-      "Source and target are the same &mdash; nothing to translate for " + pair + ".",
-    );
+    setModelStatus("Nothing to translate for " + label + ".");
     return;
   }
 
@@ -113,42 +147,37 @@ async function refreshModelStatus() {
       targetLanguage: target,
     });
   } catch {
-    setModelStatus("Couldn't check the model for " + pair + ".");
+    setModelStatus("Couldn't check the model for " + label + ".");
     return;
   }
 
   if (availability === "available") {
-    setModelStatus("&#10003; " + pair + " model is installed and runs offline.");
+    setModelStatus(label + " is installed and works offline.");
   } else if (availability === "downloading") {
-    setModelStatus(pair + " model is downloading&hellip;");
+    setModelStatus(label + " is downloading&hellip;");
   } else if (availability === "downloadable") {
     setModelStatus(
-      pair +
-        " model isn't downloaded yet. <button type=\"button\" id=\"download-model\" class=\"link-btn\">Download now</button>",
+      label +
+        ' is not downloaded yet. <button type="button" id="download-model" class="link-btn">Download now</button>',
     );
     $("download-model").addEventListener("click", downloadModel);
   } else {
-    setModelStatus("Chrome can't translate " + pair + " yet.");
+    setModelStatus("Chrome can't translate " + label + " yet.");
   }
 }
 
 async function downloadModel() {
   const source = effectiveSource();
   const target = canonical($("target").value);
-  const pairLabel =
-    "<strong>" +
-    source.toUpperCase() +
-    " &rarr; " +
-    target.toUpperCase() +
-    "</strong>";
-  renderProgress(pairLabel, null);
+  const label = pairLabel(source, target);
+  renderProgress(label, null);
   try {
     const translator = await Translator.create({
       sourceLanguage: source,
       targetLanguage: target,
       monitor(monitor) {
         monitor.addEventListener("downloadprogress", (event) => {
-          renderProgress(pairLabel, computeDownloadPercent(event));
+          renderProgress(label, computeDownloadPercent(event));
         });
       },
     });
@@ -171,45 +200,55 @@ async function downloadModel() {
 function load() {
   chrome.storage.sync.get(DEFAULTS, (data) => {
     if (chrome.runtime.lastError) {
-      showStatus("Couldn't load your settings.", true);
+      showStatus("Couldn't load your settings", true);
       return;
     }
     $("src").value = canonical(data.source) || "auto";
     $("target").value = canonical(data.target) || "en";
     $("theme").value = data.theme || "system";
     $("pageLangDetection").checked = data.pageLangDetection !== false;
+    $("pinPosition").value = data.pinPosition === true ? "fixed" : "follow";
+    syncPositionHint();
     syncSourceDisabledState();
     refreshModelStatus();
   });
 }
 
 function save() {
-  const settings = {
-    source: $("src").value || "auto",
-    target: $("target").value || "en",
-    pageLangDetection: $("pageLangDetection").checked,
-    theme: $("theme").value || "system",
-  };
-
-  chrome.storage.sync.set(settings, () => {
-    if (chrome.runtime.lastError) {
-      showStatus(
-        "Couldn't save: " + chrome.runtime.lastError.message,
-        true,
-      );
-      return;
-    }
-    showStatus("Settings saved successfully!");
-    refreshModelStatus();
-  });
+  chrome.storage.sync.set(
+    {
+      source: $("src").value || "auto",
+      target: $("target").value || "en",
+      pageLangDetection: $("pageLangDetection").checked,
+      theme: $("theme").value || "system",
+      pinPosition: $("pinPosition").value === "fixed",
+    },
+    () => {
+      if (chrome.runtime.lastError) {
+        showStatus("Couldn't save: " + chrome.runtime.lastError.message, true);
+        return;
+      }
+      showStatus("Saved");
+      refreshModelStatus();
+    },
+  );
 }
 
-$("save").addEventListener("click", save);
-$("pageLangDetection").addEventListener("change", () => {
-  syncSourceDisabledState();
-  refreshModelStatus();
-});
-$("src").addEventListener("change", refreshModelStatus);
-$("target").addEventListener("change", refreshModelStatus);
+fillSelect($("src"), true);
+fillSelect($("target"), false);
+
+for (const id of ["src", "target", "theme", "pageLangDetection", "pinPosition"]) {
+  $(id).addEventListener("change", () => {
+    if (id === "pageLangDetection") syncSourceDisabledState();
+    if (id === "pinPosition") {
+      syncPositionHint();
+      // Switching back to follow-the-selection clears the remembered spot.
+      if ($("pinPosition").value === "follow") {
+        chrome.storage.sync.remove(["popupX", "popupY"]);
+      }
+    }
+    save();
+  });
+}
 
 load();

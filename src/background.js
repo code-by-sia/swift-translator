@@ -4,6 +4,7 @@ const DEFAULT_SETTINGS = {
   target: "en",
   pageLangDetection: true,
   theme: "system",
+  pinPosition: false,
 };
 
 // `onInstalled` also fires on every extension update, so writing the whole

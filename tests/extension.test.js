@@ -144,6 +144,50 @@ describe("popup positioning", () => {
   });
 });
 
+describe("popup position preference", () => {
+  const { choosePosition } = loadContent();
+  const anchor = { left: 300, top: 400, bottom: 420 };
+  const base = { width: 320, height: 140, viewW: 1200, viewH: 800 };
+
+  it("sits just below the selection by default", () => {
+    const pos = choosePosition({ pinned: false, anchor, ...base });
+    expect(pos).toEqual({ x: 300, y: 432 });
+  });
+
+  it("flips above the selection when there is no room below", () => {
+    const low = { left: 300, top: 720, bottom: 740 };
+    const pos = choosePosition({ pinned: false, anchor: low, ...base });
+    expect(pos.y).toBe(568);
+  });
+
+  it("uses the remembered spot when the position is pinned", () => {
+    const pos = choosePosition({
+      pinned: true, savedX: 40, savedY: 60, anchor, ...base,
+    });
+    expect(pos).toEqual({ x: 40, y: 60 });
+  });
+
+  it("clamps a remembered spot saved on a larger screen", () => {
+    const pos = choosePosition({
+      pinned: true, savedX: 2400, savedY: 1300, anchor, ...base,
+    });
+    expect(pos).toEqual({ x: 872, y: 652 });
+  });
+
+  it("falls back to the selection when pinned but nothing is saved yet", () => {
+    const pos = choosePosition({
+      pinned: true, savedX: null, savedY: null, anchor, ...base,
+    });
+    expect(pos).toEqual({ x: 300, y: 432 });
+  });
+
+  it("returns null when pinned with no saved spot and no selection", () => {
+    expect(
+      choosePosition({ pinned: true, savedX: null, savedY: null, anchor: null, ...base }),
+    ).toBeNull();
+  });
+});
+
 describe("selection handling", () => {
   const { truncateSelection, MAX_SELECTION_CHARS, isContextInvalidated } =
     loadContent();
@@ -220,6 +264,7 @@ describe("background defaults", () => {
       target: "ja",
       pageLangDetection: false,
       theme: "dark",
+      pinPosition: true,
     };
     const { background, chrome } = loadBackground(saved);
     await background.seedDefaults();

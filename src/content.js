@@ -4,6 +4,9 @@ const DEFAULT_SETTINGS = {
   target: "en",
   pageLangDetection: true,
   theme: "system",
+  pinPosition: false,
+  popupX: null,
+  popupY: null,
 };
 
 const MAX_SELECTION_CHARS = 4000;
@@ -57,6 +60,28 @@ function clampToViewport(x, y, width, height, viewW, viewH, margin = EDGE_MARGIN
     x: Math.min(Math.max(x, margin), maxX),
     y: Math.min(Math.max(y, margin), maxY),
   };
+}
+
+// Decides where the popup should sit: at the user's remembered spot when the
+// position is pinned, otherwise just below the selection (flipping above it
+// when there is no room). Always clamped inside the viewport.
+function choosePosition({
+  pinned,
+  savedX,
+  savedY,
+  anchor,
+  width,
+  height,
+  viewW,
+  viewH,
+}) {
+  if (pinned && Number.isFinite(savedX) && Number.isFinite(savedY)) {
+    return clampToViewport(savedX, savedY, width, height, viewW, viewH);
+  }
+  if (!anchor) return null;
+  let y = anchor.bottom + 12;
+  if (y + height > viewH - EDGE_MARGIN) y = anchor.top - height - 12;
+  return clampToViewport(anchor.left, y, width, height, viewW, viewH);
 }
 
 function truncateSelection(text, limit = MAX_SELECTION_CHARS) {
@@ -280,7 +305,7 @@ async function translateSelection(text) {
   const api = getTranslatorApi();
   if (!api) {
     throw new TranslatorError(
-      "Chrome's built-in translator isn't available here. Update Chrome, then enable the Translation API at chrome://flags/#translation-api.",
+      "Chrome's built-in translator isn't available here. It needs Chrome 138 or later on desktop.",
     );
   }
 
@@ -566,6 +591,8 @@ function attachDragging(parts) {
   let offsetX = 0;
   let offsetY = 0;
 
+  let dropped = null;
+
   const onMove = (event) => {
     const rect = parts.box.getBoundingClientRect();
     const pos = clampToViewport(
@@ -576,6 +603,7 @@ function attachDragging(parts) {
       window.innerWidth,
       window.innerHeight,
     );
+    dropped = pos;
     parts.host.style.setProperty("left", pos.x + "px", "important");
     parts.host.style.setProperty("top", pos.y + "px", "important");
   };
@@ -584,6 +612,8 @@ function attachDragging(parts) {
     parts.box.removeAttribute("data-dragging");
     document.removeEventListener("mousemove", onMove);
     document.removeEventListener("mouseup", onUp);
+    if (dropped) rememberPosition(dropped.x, dropped.y);
+    dropped = null;
   };
 
   parts.box.addEventListener("mousedown", (event) => {
@@ -696,22 +726,39 @@ function getSelectionAnchor() {
 }
 
 function positionBox(parts, anchor) {
-  if (userMovedBox || !anchor) return;
+  const pinned = settings.pinPosition === true;
+  // When not pinned, a drag only holds for the rest of the session.
+  if (!pinned && userMovedBox) return;
   const rect = parts.box.getBoundingClientRect();
-  let y = anchor.bottom + 12;
-  if (y + rect.height > window.innerHeight - EDGE_MARGIN) {
-    y = anchor.top - rect.height - 12;
-  }
-  const pos = clampToViewport(
-    anchor.left,
-    y,
-    rect.width,
-    rect.height,
-    window.innerWidth,
-    window.innerHeight,
-  );
+  const pos = choosePosition({
+    pinned,
+    savedX: settings.popupX,
+    savedY: settings.popupY,
+    anchor,
+    width: rect.width,
+    height: rect.height,
+    viewW: window.innerWidth,
+    viewH: window.innerHeight,
+  });
+  if (!pos) return;
   parts.host.style.setProperty("left", pos.x + "px", "important");
   parts.host.style.setProperty("top", pos.y + "px", "important");
+}
+
+// Remember where the user dropped the popup, but only when they asked for a
+// fixed position. Written on drag end only, so this stays well inside the
+// storage.sync write quota.
+function rememberPosition(x, y) {
+  if (settings.pinPosition !== true) return;
+  settings.popupX = x;
+  settings.popupY = y;
+  try {
+    chrome.storage.sync.set({ popupX: x, popupY: y });
+  } catch (err) {
+    if (!isContextInvalidated(err)) {
+      console.warn("Swift Translator: could not save popup position", err);
+    }
+  }
 }
 
 function showBox(parts, anchor) {
@@ -918,7 +965,7 @@ function init() {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       requestSeq += 1; // cancel anything in flight
-      userMovedBox = false;
+      if (settings.pinPosition !== true) userMovedBox = false;
       hideBox();
     }
   });
@@ -946,5 +993,6 @@ if (typeof module !== "undefined" && module.exports) {
     isContextInvalidated,
     clampPercent,
     computeDownloadPercent,
+    choosePosition,
   };
 }

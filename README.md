@@ -15,9 +15,9 @@ A high-performance, 100% private, beautifully designed Chrome extension that tra
 
 ## Getting Started
 
-1. **Enable the API**: Go to `chrome://flags/#translation-api` and enable the Translation API. Restart Chrome.
+1. **Check your Chrome**: You need Chrome 138 or later on desktop. The built-in Translator API is enabled by default — no flags to turn on. Mobile Chrome does not support it.
 2. **Install**: Open `chrome://extensions`, enable **Developer mode**, and select **Load unpacked**. Choose the `src` folder.
-3. **Use**: Highlight any text on any webpage to see the translation instantly.
+3. **Use**: Highlight any text on any webpage to see the translation instantly. The first translation of a new language pair downloads that model, with a progress bar in the popup.
 
 ## Documentation
 For full instructions, troubleshooting, and configuration details, please see the [Full Guide](./docs/guide.md).

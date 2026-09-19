@@ -4,11 +4,10 @@ Welcome to **Swift Translator**! This browser extension leverages the power of C
 
 ## Installation
 
-1. **Enable Chrome Flags**: 
-   Since this extension uses experimental local AI features, you must enable them in your browser:
-   - Go to `chrome://flags/#translation-api` in your address bar.
-   - Set the flag to **Enabled**.
-   - Restart your browser.
+1. **Check your browser**:
+   You need **Chrome 138 or later on desktop** (Windows, macOS or Linux). The
+   built-in Translator API is on by default in these versions — there are no
+   flags to enable. Chrome on Android and iOS does not support it.
 2. **Load the Extension**:
    - Go to `chrome://extensions/`.
    - Enable **Developer mode** in the top right corner.
