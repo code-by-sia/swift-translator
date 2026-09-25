@@ -408,6 +408,27 @@
                 </div>
             </div>
 
+            <div class="group-label">Writing</div>
+            <div class="group">
+                <div class="row">
+                    <div class="label">
+                        Refine the focused field
+                        <span>Press <kbd>Alt</kbd> <kbd>Shift</kbd> <kbd>R</kbd> in a text box to rephrase what you have written.</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="refineEnabled" />
+                        <span class="track"></span>
+                    </label>
+                </div>
+            </div>
+            <p class="note" id="refine-note">
+                Off by default. Rewriting uses a larger on-device model than
+                translation does, so it needs roughly 22&nbsp;GB of free disk
+                space and a GPU with over 4&nbsp;GB of VRAM (or 16&nbsp;GB of
+                RAM). Your draft is never stored or sent anywhere. Never
+                offered on password, payment or verification-code fields.
+            </p>
+
             <div class="group-label">Language model</div>
             <div class="group">
                 <div class="model">

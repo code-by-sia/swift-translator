@@ -248,6 +248,118 @@ describe("model download progress", () => {
   });
 });
 
+describe("refine: which fields may be read", () => {
+  const { refineBlockReason } = loadContent();
+
+  const make = (html) => {
+    document.body.innerHTML = html;
+    return document.body.firstElementChild;
+  };
+  const allowed = (el, host = "example.com") => refineBlockReason(el, host) === null;
+
+  it("allows a plain textarea and a plain text input", () => {
+    expect(allowed(make("<textarea></textarea>"))).toBe(true);
+    expect(allowed(make('<input type="text">'))).toBe(true);
+  });
+
+  it("allows contenteditable", () => {
+    const el = make('<div contenteditable="true">hi</div>');
+    Object.defineProperty(el, "isContentEditable", { value: true });
+    expect(allowed(el)).toBe(true);
+  });
+
+  it("refuses password fields", () => {
+    expect(allowed(make('<input type="password">'))).toBe(false);
+  });
+
+  it("refuses a text field that shares a form with a password box", () => {
+    // "Show password" toggles flip type at runtime, so the whole form is out.
+    document.body.innerHTML =
+      '<form><input type="text" id="u"><input type="password"></form>';
+    expect(allowed(document.getElementById("u"))).toBe(false);
+  });
+
+  it("refuses one-time-code and short fields", () => {
+    expect(allowed(make('<input type="text" autocomplete="one-time-code">'))).toBe(false);
+    expect(allowed(make('<input type="text" maxlength="6">'))).toBe(false);
+    expect(allowed(make('<input type="text" inputmode="numeric">'))).toBe(false);
+  });
+
+  it("refuses payment fields by autocomplete token and by name", () => {
+    expect(allowed(make('<input type="text" autocomplete="cc-number">'))).toBe(false);
+    expect(allowed(make('<input type="text" name="cardNumber">'))).toBe(false);
+    expect(allowed(make('<textarea aria-label="CVV"></textarea>'))).toBe(false);
+    expect(allowed(make('<input type="text" placeholder="IBAN">'))).toBe(false);
+  });
+
+  it("refuses non-text input types", () => {
+    for (const type of ["email", "tel", "number", "url", "search", "date"]) {
+      expect(allowed(make('<input type="' + type + '">'))).toBe(false);
+    }
+  });
+
+  it("refuses read-only and disabled fields", () => {
+    expect(allowed(make("<textarea readonly></textarea>"))).toBe(false);
+    expect(allowed(make("<textarea disabled></textarea>"))).toBe(false);
+  });
+
+  it("refuses non-editable elements and nothing at all", () => {
+    expect(allowed(make("<div>plain</div>"))).toBe(false);
+    expect(refineBlockReason(null, "example.com")).not.toBeNull();
+  });
+
+  it("refuses everything on payment provider origins", () => {
+    expect(allowed(make("<textarea></textarea>"), "js.stripe.com")).toBe(false);
+    expect(allowed(make("<textarea></textarea>"), "checkout.adyen.com")).toBe(false);
+    expect(allowed(make("<textarea></textarea>"), "pay.google.com")).toBe(false);
+    // ...but not on a lookalike that merely ends with the same letters
+    expect(allowed(make("<textarea></textarea>"), "notstripe.com")).toBe(true);
+  });
+
+  it("gives a human-readable reason, not a code", () => {
+    const reason = refineBlockReason(make('<input type="password">'), "example.com");
+    expect(typeof reason).toBe("string");
+    expect(reason.length).toBeGreaterThan(5);
+  });
+});
+
+describe("refine: model output sanitising", () => {
+  const { sanitizeRefinedOutput } = loadContent();
+  const original = "i think we should maybe do the thing soon";
+
+  it("keeps a clean rewrite", () => {
+    expect(sanitizeRefinedOutput("We should do this soon.", original)).toBe(
+      "We should do this soon.",
+    );
+  });
+
+  it("strips a conversational preamble", () => {
+    expect(sanitizeRefinedOutput("Here is the rewritten text: We should do this soon.", original))
+      .toBe("We should do this soon.");
+    expect(sanitizeRefinedOutput("Rewritten: We should do this soon.", original))
+      .toBe("We should do this soon.");
+  });
+
+  it("strips wrapping quotes the model adds", () => {
+    expect(sanitizeRefinedOutput('"We should do this soon."', original)).toBe(
+      "We should do this soon.",
+    );
+  });
+
+  it("rejects empty or unchanged output rather than overwriting", () => {
+    expect(sanitizeRefinedOutput("", original)).toBeNull();
+    expect(sanitizeRefinedOutput("   ", original)).toBeNull();
+    expect(sanitizeRefinedOutput(original, original)).toBeNull();
+    expect(sanitizeRefinedOutput(null, original)).toBeNull();
+  });
+
+  it("rejects a runaway rewrite", () => {
+    // The model ignoring the instruction and writing an essay must not clobber
+    // the user's draft.
+    expect(sanitizeRefinedOutput("word ".repeat(200), original)).toBeNull();
+  });
+});
+
 describe("background defaults", () => {
   it("seeds defaults on a fresh install", async () => {
     const { background, chrome } = loadBackground({});
@@ -265,6 +377,7 @@ describe("background defaults", () => {
       pageLangDetection: false,
       theme: "dark",
       pinPosition: true,
+      refineEnabled: true,
     };
     const { background, chrome } = loadBackground(saved);
     await background.seedDefaults();

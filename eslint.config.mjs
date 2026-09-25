@@ -17,6 +17,7 @@ export default [
         translation: "readonly",
         Translator: "readonly",
         LanguageDetector: "readonly",
+        LanguageModel: "readonly",
       },
     },
     rules: {

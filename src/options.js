@@ -4,6 +4,7 @@ const DEFAULTS = {
   pageLangDetection: true,
   theme: "system",
   pinPosition: false,
+  refineEnabled: false,
 };
 
 // Legacy ISO codes that used to be stored but are not valid Translator API
@@ -208,6 +209,7 @@ function load() {
     $("theme").value = data.theme || "system";
     $("pageLangDetection").checked = data.pageLangDetection !== false;
     $("pinPosition").value = data.pinPosition === true ? "fixed" : "follow";
+    $("refineEnabled").checked = data.refineEnabled === true;
     syncPositionHint();
     syncSourceDisabledState();
     refreshModelStatus();
@@ -222,6 +224,7 @@ function save() {
       pageLangDetection: $("pageLangDetection").checked,
       theme: $("theme").value || "system",
       pinPosition: $("pinPosition").value === "fixed",
+      refineEnabled: $("refineEnabled").checked,
     },
     () => {
       if (chrome.runtime.lastError) {
@@ -237,7 +240,7 @@ function save() {
 fillSelect($("src"), true);
 fillSelect($("target"), false);
 
-for (const id of ["src", "target", "theme", "pageLangDetection", "pinPosition"]) {
+for (const id of ["src", "target", "theme", "pageLangDetection", "pinPosition", "refineEnabled"]) {
   $(id).addEventListener("change", () => {
     if (id === "pageLangDetection") syncSourceDisabledState();
     if (id === "pinPosition") {
